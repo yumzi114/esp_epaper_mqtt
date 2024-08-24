@@ -1,4 +1,8 @@
 # esp_epaper_mqtt
+## this report used esp_idf 5.1
+## Image
+![IMG_2565-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/ac922efb-dbb7-437e-819b-2f5ed191376c)
+
 ## Create cfg.toml
 ```rust
 [mqtt]
@@ -55,3 +59,4 @@ but this report is not used
 
 mqtt tls auth is slow
 wait for wifi, mqtt connection
+try click reset button

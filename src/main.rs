@@ -22,7 +22,6 @@ use esp_idf_svc::wifi::EspWifi;
 use esp_idf_svc::mqtt::client::{EspMqttClient, EventPayload, MqttClientConfiguration, MqttProtocolVersion, QoS};
 use heapless::String;
 use core::str;
-use std::sync::atomic::Ordering;
 use std::thread;
 use std::{
     thread::sleep,
@@ -39,6 +38,7 @@ fn main()->anyhow::Result<()> {
     let sysloop = EspSystemEventLoop::take()?;
     let nvs = EspDefaultNvsPartition::take()?;
     let mut wifi = EspWifi::new(peripherals.modem, sysloop, Some(nvs))?;
+    //WIFI CONFIG
     let ssid: String<32> = String::try_from("").unwrap();
     let password: String<64> = String::try_from("").unwrap();
  
@@ -46,13 +46,9 @@ fn main()->anyhow::Result<()> {
     let sclk = peripherals.pins.gpio6;
     let miso = peripherals.pins.gpio21;
     let mosi = PinDriver::input(peripherals.pins.gpio7)?;
-    // peripherals.pins.gpio7;
     let cs = PinDriver::output(peripherals.pins.gpio3)?;
-    // peripherals.pins.gpio10;
     let dc = PinDriver::output(peripherals.pins.gpio8)?;
-    // peripherals.pins.gpio4;
     let rst = PinDriver::output(peripherals.pins.gpio5)?;
-
     let mut delay = Ets;
     let config = Config::new().baudrate(112500.into());
     let mut device = SpiDeviceDriver::new_single(
@@ -81,6 +77,7 @@ fn main()->anyhow::Result<()> {
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
         ssid,
         password,
+        //your wifi AuthMethod
         auth_method: AuthMethod::WPA3Personal,
         ..Default::default()
     }))?;
@@ -96,17 +93,16 @@ fn main()->anyhow::Result<()> {
             .text_color(Black)
             .background_color(White)
             .build();
-    
-
-
     println!("Wifi Connected");
     let mqtt_config = MqttClientConfiguration{
         protocol_version:Some(MqttProtocolVersion::V3_1_1),
+        // mqtt auth user, pw and connect client id
         client_id:Some("ESP"),
-        username:Some("admin"),
-        password:Some("zz"),
+        username:Some(""),
+        password:Some(""),
         ..Default::default()
     };
+    // MQTT run closure (can run main loop)
     // let mut client = EspMqttClient::new_cb(
     //     "mqtt://192.168.0.106:1883/iot", 
     //     &mqtt_config,
@@ -130,7 +126,7 @@ fn main()->anyhow::Result<()> {
     //     }
     // )?;
     let (mut client, mut con)=EspMqttClient::new("mqtt://192.168.0.106:1883/iot", &mqtt_config)?;
-    
+    // MQTT run thread(thread running)
     // thread::spawn(move || {
     //     info!("MQTT Listening for messages");
 
@@ -161,33 +157,17 @@ fn main()->anyhow::Result<()> {
             }=>{
                 display.clear_buffer(Color::White);
                 display.clear(BinaryColor::Off).unwrap();
-                // epd.update_frame(&mut device, display.buffer(), &mut delay)?;
-                // epd.display_frame(&mut device, &mut delay)?;
                 let _ = Text::with_text_style(str::from_utf8(data).unwrap(), Point::new(0, 0), c_style, text_style)
                 .draw(&mut display);
                 epd.update_frame(&mut device, display.buffer(), &mut delay)?;
                 epd.display_frame(&mut device, &mut delay)?;
-                // println!("{:?}",str::from_utf8(data).unwrap());
             }
             _=>{
-                // let _ = Text::with_text_style("No", Point::new(0, 0), c_style, text_style)
-                // .draw(&mut display);
-                // epd.update_frame(&mut device, display.buffer(), &mut delay)?;
-                // epd.display_frame(&mut device, &mut delay)?;
+    
             }
         }
     }
-    // loop{
-        
-    //     // let test = TEST_AUTO.load(Ordering::Relaxed);
-    //     // let str = format!("{}",test);
-    //     // let _ = Text::with_text_style(str.as_str(), Point::new(0, 0), c_style, text_style)
-    //     // .draw(&mut display);
-    //     // epd.update_frame(&mut device, display.buffer(), &mut delay)?;
-    //     // epd.display_frame(&mut device, &mut delay)?;
-    //     println!("loop");
-    //     sleep(Duration::from_secs(1));
-    // }
+
     Ok(())
 }
 
